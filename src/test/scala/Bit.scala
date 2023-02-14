@@ -1,4 +1,3 @@
-
 import be.adamv.impuls.delta.BitRelayVar
 import be.adamv.momentum.util.*
 import be.adamv.momentum.*
