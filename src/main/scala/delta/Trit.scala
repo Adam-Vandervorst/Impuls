@@ -47,7 +47,8 @@ trait TritView extends UDeltaSource[Trit, TritDelta]:
       case x => x
     }
 
-  lazy val abs: BitView = new:
+  // -1 -> T, 0 -> F, 1 -> T
+  lazy val absView: BitView = new:
     override def get(u: Unit): Boolean = self.value != 0
 
     override val dsource: Descend[Unit, BitDelta, Unit] = self.dsource.collect {
@@ -56,25 +57,27 @@ trait TritView extends UDeltaSource[Trit, TritDelta]:
       case Neutralize =>  BitDelta.Fall
     }
 
-  lazy val higher: BitView = new:
-    override def get(u: Unit): Boolean = self.value != -1
+  // -1 -> F,  0 -> F,  1 -> T
+  lazy val higherView: BitView = new:
+    override def get(u: Unit): Boolean = self.value == 1
 
     override val dsource: Descend[Unit, BitDelta, Unit] = self.dsource.collect {
       case ToPos => BitDelta.Rise
       case ToNeg => BitDelta.Fall
       case Neutralize => BitDelta.Fall
-      case Flip => ???
+      case Negate => BitDelta.Flip // to be value-independent, this assumes Negate is not propagated to here when the value is 0
     }
 
+  // -1 -> F, 0 -> T, 1 -> T
+  lazy val lowerView: BitView = new:
+    override def get(u: Unit): Boolean = self.value != -1
 
-//def higher: Source[Boolean] = ???
-//// ToPos.mapTo(true) | Negate.map(_ == 1) | Neutralize.mapTo(false)
-//def lower: Source[Boolean] = ???
-//// ToNeg.mapTo(true) | Negate.map(_ == 0) | Neutralize.mapTo(false)
-//def riseFrom: Source[Boolean] = ???
-//// ToPos.mapTo(true) | ToNeg.mapTo(false)
-//def fallFrom: Source[Boolean] = ???
-//// Neutralize.map(???)
+    override val dsource: Descend[Unit, BitDelta, Unit] = self.dsource.collect {
+      case ToPos => BitDelta.Rise
+      case ToNeg => BitDelta.Fall
+      case Neutralize => BitDelta.Rise
+      case Negate => BitDelta.Flip
+    }
 
 
 class TritRelayVar(initial: Trit) extends UDeltaRelayVar[Trit, TritDelta](initial), TritHandle, TritView:
