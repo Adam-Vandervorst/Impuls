@@ -5,6 +5,14 @@ import be.adamv.momentum.{*, given}
 import be.adamv.impuls.*
 
 
+// Needs knowledge about the state to know the new state
+enum BitFlipDelta extends Delta[Boolean]:
+  case Flip
+
+// Needs knowledge about the state to know the delta
+enum BitSetDelta extends Delta[Boolean]:
+  case Rise, Fall
+
 enum BitDelta extends Delta[Boolean]:
   case Rise, Fall, Flip
 import BitDelta.*
