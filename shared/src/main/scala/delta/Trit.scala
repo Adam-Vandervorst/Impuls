@@ -21,6 +21,8 @@ trait TritHandle extends UDeltaSink[Trit, TritDelta]:
   lazy val neutralizeHandle: Sink[Unit, Unit] = self.dsink.contramapTo(Neutralize)
   lazy val negateHandle: Sink[Unit, Unit] = self.dsink.contramapTo(Negate)
 
+  lazy val signHandle: Sink[Int, Unit] = math.signum
+
   lazy val oppositeHandle: TritHandle = new TritHandle:
     override def set(v: Trit): Unit = self.set((-v).asInstanceOf[Trit])
 
@@ -31,17 +33,17 @@ trait TritHandle extends UDeltaSink[Trit, TritDelta]:
     }
 
 
-trait TritView extends UDeltaSource[Trit, TritDelta]:
+trait TritView extends UDeltaDescend[Trit, TritDelta]:
   self =>
-  lazy val toPosView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case ToPos => () }
-  lazy val toNegView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case ToNeg => () }
-  lazy val neutralizeView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Neutralize => () }
-  lazy val negateView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Negate => () }
+  lazy val toPosView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case ToPos => () }
+  lazy val toNegView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case ToNeg => () }
+  lazy val neutralizeView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Neutralize => () }
+  lazy val negateView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Negate => () }
 
   lazy val oppositeView: TritView = new TritView:
     override def get(u: Unit): Trit = (-self.value).asInstanceOf[Trit]
 
-    override val dsource: Descend[Unit, TritDelta, Unit] = self.dsource.map{
+    override val ddescend: Descend[Unit, TritDelta, Unit] = self.ddescend.map{
       case ToPos => ToNeg
       case ToNeg => ToPos
       case x => x
@@ -51,7 +53,7 @@ trait TritView extends UDeltaSource[Trit, TritDelta]:
   lazy val absView: BitView = new:
     override def get(u: Unit): Boolean = self.value != 0
 
-    override val dsource: Descend[Unit, BitDelta, Unit] = self.dsource.collect {
+    override val ddescend: Descend[Unit, BitDelta, Unit] = self.ddescend.collect {
       case ToPos => BitDelta.Rise
       case ToNeg =>  BitDelta.Rise
       case Neutralize =>  BitDelta.Fall
@@ -61,7 +63,7 @@ trait TritView extends UDeltaSource[Trit, TritDelta]:
   lazy val higherView: BitView = new:
     override def get(u: Unit): Boolean = self.value == 1
 
-    override val dsource: Descend[Unit, BitDelta, Unit] = self.dsource.collect {
+    override val ddescend: Descend[Unit, BitDelta, Unit] = self.ddescend.collect {
       case ToPos => BitDelta.Rise
       case ToNeg => BitDelta.Fall
       case Neutralize => BitDelta.Fall
@@ -72,7 +74,7 @@ trait TritView extends UDeltaSource[Trit, TritDelta]:
   lazy val lowerView: BitView = new:
     override def get(u: Unit): Boolean = self.value != -1
 
-    override val dsource: Descend[Unit, BitDelta, Unit] = self.dsource.collect {
+    override val ddescend: Descend[Unit, BitDelta, Unit] = self.ddescend.collect {
       case ToPos => BitDelta.Rise
       case ToNeg => BitDelta.Fall
       case Neutralize => BitDelta.Rise

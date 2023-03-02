@@ -34,16 +34,16 @@ trait BitHandle extends UDeltaSink[Boolean, BitDelta]:
     }
 
 
-trait BitView extends UDeltaSource[Boolean, BitDelta]:
+trait BitView extends UDeltaDescend[Boolean, BitDelta]:
   self =>
-  lazy val riseView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Rise => () }
-  lazy val fallView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Fall => () }
-  lazy val flipView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Flip => () }
+  lazy val riseView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Rise => () }
+  lazy val fallView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Fall => () }
+  lazy val flipView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Flip => () }
 
   lazy val oppositeView: BitView = new BitView:
     override def get(u: Unit): Boolean = !self.value
 
-    override val dsource: Descend[Unit, BitDelta, Unit] = self.dsource.map{
+    override val ddescend: Descend[Unit, BitDelta, Unit] = self.ddescend.map{
       case Rise => Fall
       case Fall => Rise
       case Flip => Flip

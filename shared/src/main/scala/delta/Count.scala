@@ -49,18 +49,18 @@ trait CountHandle extends UDeltaSink[Int, CountDelta]:
     }
   end modHandle
 
-
-trait CountView extends UDeltaSource[Int, CountDelta]:
+// cv.divView(100).incrView.adapt(somethingToRunEvery100)
+trait CountView extends UDeltaDescend[Int, CountDelta]:
   self =>
-  lazy val incrView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Incr => () }
-  lazy val resetView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Reset => () }
+  lazy val incrView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Incr => () }
+  lazy val resetView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Reset => () }
 
   def divView(n: Int): CountView = new CountView:
     var k = 1
 
     override def get(u: Unit): Int = self.value/n
 
-    override val dsource: Descend[Unit, CountDelta, Unit] = self.dsource.filter{
+    override val ddescend: Descend[Unit, CountDelta, Unit] = self.ddescend.filter{
       case Incr =>
         k += 1
         if k == n then
@@ -78,7 +78,7 @@ trait CountView extends UDeltaSource[Int, CountDelta]:
 
     override def get(u: Unit): Int = self.value % n
 
-    override val dsource: Descend[Unit, CountDelta, Unit] = self.dsource.collect {
+    override val ddescend: Descend[Unit, CountDelta, Unit] = self.ddescend.collect {
       case Incr =>
         k += 1
         if k == n then

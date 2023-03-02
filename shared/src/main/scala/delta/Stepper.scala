@@ -15,10 +15,10 @@ trait StepperHandle extends UDeltaSink[Int, StepperDelta]:
   lazy val decrHandle: Sink[Unit, Unit] = self.dsink.contramapTo(Decr)
 
 
-trait StepperView extends UDeltaSource[Int, StepperDelta]:
+trait StepperView extends UDeltaDescend[Int, StepperDelta]:
   self =>
-  lazy val incrView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Incr => () }
-  lazy val decrView: Descend[Unit, Unit, Unit] = self.dsource.collect{ case Decr => () }
+  lazy val incrView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Incr => () }
+  lazy val decrView: Descend[Unit, Unit, Unit] = self.ddescend.collect{ case Decr => () }
 
 
 class StepperRelayVar(i: Int) extends UDeltaRelayVar[Int, StepperDelta](i), StepperHandle, StepperView:

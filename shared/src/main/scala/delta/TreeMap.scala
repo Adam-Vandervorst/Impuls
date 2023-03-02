@@ -25,11 +25,11 @@ trait TreeMapHandle[K, V] extends UDeltaSink[mutable.TreeMap[K, V], TreeMapDelta
   lazy val deleteHandle: Sink[K, Unit] = self.dsink.contramap(Delete[K, V])
 
 
-trait TreeMapView[K, V] extends UDeltaSource[mutable.TreeMap[K, V], TreeMapDelta[K, V]]:
+trait TreeMapView[K, V] extends UDeltaDescend[mutable.TreeMap[K, V], TreeMapDelta[K, V]]:
   self =>
   given ord: Ordering[K]
-  lazy val insertView: Descend[Unit, (K, V), Unit] = self.dsource.collect { case Insert(k, v) => (k, v) }
-  lazy val deleteView: Descend[Unit, K, Unit] = self.dsource.collect { case Delete(k) => k }
+  lazy val insertView: Descend[Unit, (K, V), Unit] = self.ddescend.collect { case Insert(k, v) => (k, v) }
+  lazy val deleteView: Descend[Unit, K, Unit] = self.ddescend.collect { case Delete(k) => k }
 
 
 class TreeMapRelayVar[K : Ordering, V](initial: mutable.TreeMap[K, V]) extends UDeltaRelayVar[mutable.TreeMap[K, V], TreeMapDelta[K, V]](initial):
