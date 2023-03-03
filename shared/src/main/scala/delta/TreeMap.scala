@@ -9,13 +9,11 @@ import scala.collection.mutable
 enum TreeMapDelta[K : Ordering, V] extends Delta[mutable.TreeMap[K, V]]:
   case Insert[KK : Ordering, VV](k: KK, v: VV) extends TreeMapDelta[KK, VV]
   case Delete[KK : Ordering, VV](k: KK) extends TreeMapDelta[KK, VV]
-import TreeMapDelta.*
 
-
-object TreeMapDelta:
-  def mapValues[K : Ordering, T, U](f: T => U)(sd: TreeMapDelta[K, T]): TreeMapDelta[K, U] = sd match
+  def mapValues[W](f: V => W): TreeMapDelta[K, W] = this match
     case Insert(i, t) => Insert(i, f(t))
     case Delete(i) => Delete(i)
+import TreeMapDelta.*
 
 
 trait TreeMapHandle[K, V] extends UDeltaSink[mutable.TreeMap[K, V], TreeMapDelta[K, V]]:
@@ -30,6 +28,11 @@ trait TreeMapView[K, V] extends UDeltaDescend[mutable.TreeMap[K, V], TreeMapDelt
   given ord: Ordering[K]
   lazy val insertView: Descend[Unit, (K, V), Unit] = self.ddescend.collect { case Insert(k, v) => (k, v) }
   lazy val deleteView: Descend[Unit, K, Unit] = self.ddescend.collect { case Delete(k) => k }
+
+  def mapValues[W](f: V => W): TreeMapView[K, W] = new TreeMapView[K, W]:
+    val ord: Ordering[K] = ord
+    override def get(e: Unit): mutable.TreeMap[K, W] = self.get(e).map((k, v) => (k, f(v)))
+    override val ddescend: Descend[Unit, TreeMapDelta[K, W], Unit] = self.ddescend.map(_.mapValues(f))
 
 
 class TreeMapRelayVar[K : Ordering, V](initial: mutable.TreeMap[K, V]) extends UDeltaRelayVar[mutable.TreeMap[K, V], TreeMapDelta[K, V]](initial):
