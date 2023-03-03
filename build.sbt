@@ -1,4 +1,4 @@
-ThisBuild / version := "0.2.1"
+ThisBuild / version := "0.2.2"
 ThisBuild / scalaVersion := "3.2.1"
 
 lazy val root = crossProject(JSPlatform, JVMPlatform, NativePlatform).withoutSuffixFor(JVMPlatform)
