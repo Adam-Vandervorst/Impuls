@@ -29,21 +29,22 @@ trait TreeMapView[K, V] extends UDeltaDescend[mutable.TreeMap[K, V], TreeMapDelt
   lazy val insertView: Descend[Unit, (K, V), Unit] = self.ddescend.collect { case Insert(k, v) => (k, v) }
   lazy val deleteView: Descend[Unit, K, Unit] = self.ddescend.collect { case Delete(k) => k }
 
-  private lazy val atKeys = mutable.TreeMap.empty[K, Descend[Unit, V, Unit]]
-  def atKey(k: K): Descend[Unit, V, Unit] = atKeys.getOrElseUpdate(k, self.ddescend.collect {
+//  private lazy val atKeys = mutable.TreeMap.empty[K, Descend[Unit, V, Unit]]
+  def atKey(k: K): Descend[Unit, V, Unit] = self.ddescend.collect {
     case Insert(`k`, v) => v
-  })
+  }
 
   def mapValues[W](f: V => W): TreeMapView[K, W] = new TreeMapView[K, W]:
     val ord: Ordering[K] = self.ord
     override def get(e: Unit): mutable.TreeMap[K, W] = self.value.map((k, v) => (k, f(v)))
     override val ddescend: Descend[Unit, TreeMapDelta[K, W], Unit] = self.ddescend.map(_.mapValues(f))
 
-  def splitKeys[W](f: (K, Descend[Unit, V, Unit]) => W): TreeMapView[K, W] = new TreeMapRelayVar[K, W](
-      self.value.map((k, _) => (k, f(k, self.atKey(k))))):
+  def splitKeys[W](f: (K, Descend[Unit, V, Unit]) => W): TreeMapView[K, W] = new TreeMapView[K, W]:
+    val ord: Ordering[K] = self.ord
+    override def get(e: Unit): mutable.TreeMap[K, W] = self.value.map((k, _) => (k, f(k, self.atKey(k))))
 
     override val ddescend: Descend[Unit, TreeMapDelta[K, W], Unit] = self.ddescend.map {
-      case Insert(k, v) => Insert(k, value.getOrElseUpdate(k, f(k, self.atKey(k))))
+      case Insert(k, v) => Insert(k, f(k, self.atKey(k)))
       case Delete(k) => Delete(k)
     }
 
